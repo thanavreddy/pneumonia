@@ -1,0 +1,29 @@
+# Raw dataset
+data/raw/
+
+# Generated CSV splits contain local absolute paths
+data/splits/*.csv
+
+# Model checkpoints
+models/*.pth
+models/*.pt
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
