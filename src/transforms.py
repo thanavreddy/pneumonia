@@ -17,9 +17,6 @@ def get_train_transforms() -> transforms.Compose:
 
     return transforms.Compose(
         [
-            # 胸片原本是灰度图，但预训练 ResNet18 需要三个通道
-            transforms.Grayscale(num_output_channels=3),
-
             # 所有图片统一为 ResNet18 使用的 224 × 224
             transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
 
@@ -76,8 +73,6 @@ def get_eval_transforms() -> transforms.Compose:
 
     return transforms.Compose(
         [
-            transforms.Grayscale(num_output_channels=3),
-
             transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
 
             transforms.ToTensor(),

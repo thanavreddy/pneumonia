@@ -9,6 +9,7 @@ NUM_CLASSES = 2
 def create_model(
     num_classes: int = NUM_CLASSES,
     use_pretrained: bool = True,
+    freeze_features: bool = False,
 ) -> nn.Module:
     """Create a ResNet18 model for chest X-ray classification."""
 
@@ -27,6 +28,13 @@ def create_model(
         in_features=input_features,
         out_features=num_classes,
     )
+
+    if freeze_features:
+        for parameter in model.parameters():
+            parameter.requires_grad = False
+
+        for parameter in model.fc.parameters():
+            parameter.requires_grad = True
 
     return model
 

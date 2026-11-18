@@ -15,6 +15,10 @@ def predict_image(image_path, model_path=None):
     project_root = Path(__file__).resolve().parents[1]
     if model_path is None:
         model_path = project_root / "models" / "resnet18.pth"
+    else:
+        model_path = Path(model_path)
+        if not model_path.is_absolute():
+            model_path = project_root / model_path
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = create_model(num_classes=2, use_pretrained=False).to(device)

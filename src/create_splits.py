@@ -85,6 +85,11 @@ def main() -> None:
 
     dataframe = collect_samples(original_train_dir)
 
+    # This split is at image level. It does not use patient identity because
+    # the public dataset filenames do not provide reliable patient IDs.
+    # Therefore, images from the same patient could appear in both splits,
+    # causing optimistic validation results.
+
     train_dataframe, val_dataframe = train_test_split(
         dataframe,
         test_size=VALIDATION_RATIO,

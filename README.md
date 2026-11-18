@@ -15,7 +15,6 @@ pneunomia/
 │   ├── raw/chest_xray/
 │   └── splits/
 ├── models/
-├── notebooks/
 ├── results/
 │   ├── training/
 │   └── evaluation/
@@ -62,6 +61,16 @@ python src/create_splits.py
 This split uses random seed 42 and keeps 20% of the original training data for
 validation. The test set remains completely separate and is not used during training.
 
+### Data-split limitation
+
+The split is performed at the **image level**, not the patient level. The commonly
+distributed dataset does not provide a reliable patient identifier for every image.
+Different views or repeated X-rays from the same patient could therefore appear in
+both training and validation data. If patient identifiers become available, perform
+the split using patient IDs instead of individual filenames to prevent patient-level
+data leakage. The independent test set should remain untouched during both modes of
+training and model selection.
+
 ## Setup
 
 ```bash
@@ -70,27 +79,42 @@ pip install -r requirements.txt
 
 ## Train
 
-```bash
-python src/train.py
-```
-
-Small configurable defaults are provided:
+Full fine-tuning (the default):
 
 ```bash
-python src/train.py --epochs 5 --batch-size 16 --learning-rate 0.0001
+python src/train.py --mode fine-tune --epochs 5 --batch-size 16 --learning-rate 0.0001
 ```
 
-Training saves:
+Frozen feature extractor:
 
-- `models/resnet18.pth`
-- `results/training/training_history.csv`
-- `results/training/training_loss.png`
-- `results/training/training_accuracy.png`
+```bash
+python src/train.py --mode freeze --epochs 5 --batch-size 16 --learning-rate 0.0001
+```
+
+Full fine-tuning updates every ResNet18 weight. Frozen mode loads pretrained ImageNet
+weights, freezes the convolutional feature extractor, replaces the 1000-class
+fully connected layer with a 2-class layer, and trains only that new layer.
+
+Training saves the best checkpoint for the selected mode:
+
+- Full fine-tuning: `models/resnet18.pth`
+- Frozen features: `models/resnet18_feature_extractor.pth`
+
+It also saves mode-specific history and plot files under `results/training/`:
+
+- Fine-tuning: `training_history_fine_tuned.csv`,
+  `training_loss_fine_tuned.png`, `training_accuracy_fine_tuned.png`
+- Frozen features: `training_history_feature_extractor.csv`,
+  `training_loss_feature_extractor.png`, `training_accuracy_feature_extractor.png`
+
+The checkpoint is saved when macro F1 on the validation set improves. Training history
+also reports validation accuracy, precision, recall, and F1.
 
 ## Evaluate
 
 ```bash
 python src/evaluate.py
+python src/evaluate.py --model models/resnet18_feature_extractor.pth
 ```
 
 Evaluation uses the independent test set and reports accuracy, precision, recall,
@@ -103,6 +127,7 @@ F1-score, and the confusion matrix. It saves:
 
 ```bash
 python src/predict.py path/to/xray.jpeg
+python src/predict.py path/to/xray.jpeg --model models/resnet18_feature_extractor.pth
 ```
 
 Example output:
@@ -143,8 +168,8 @@ It creates visualizations under `results/explainability/`.
 
 ```bash
 !python src/create_splits.py
-!python src/train.py --epochs 5 --batch-size 16 --learning-rate 0.0001
-!python src/evaluate.py
+!python src/train.py --mode fine-tune --epochs 5 --batch-size 16 --learning-rate 0.0001
+!python src/evaluate.py --model models/resnet18.pth
 ```
 
 When running in Colab, the split CSV files and trained model can be saved in Google
@@ -162,7 +187,8 @@ unless it is stored persistently.
    2-class linear layer.
 5. **Training:** Adam minimizes CrossEntropyLoss. Training and validation loss and
    accuracy are tracked each epoch.
-6. **Model selection:** The model state with the highest validation accuracy is saved.
+6. **Model selection:** The model state with the highest macro-validation-F1 score is
+   saved. This is preferable to checkpoint selection by loss or a single metric.
 7. **Evaluation:** The saved model is tested on images it never saw during training
    or validation. Accuracy, precision, recall, F1-score, and a confusion matrix describe
    performance.

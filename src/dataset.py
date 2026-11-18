@@ -119,7 +119,7 @@ class ChestXrayDataset(Dataset):
         image_path, label = self.samples[index]
 
         with Image.open(image_path) as image:
-            image = image.convert("L")
+            image = image.convert("RGB")
 
             if self.transform is not None:
                 image = self.transform(image)

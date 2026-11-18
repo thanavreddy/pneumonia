@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -18,9 +19,23 @@ CLASS_NAMES = ["NORMAL", "PNEUMONIA"]
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Model checkpoint to evaluate; defaults to models/resnet18.pth",
+    )
+    args = parser.parse_args()
+
     project_root = Path(__file__).resolve().parents[1]
     data_root = project_root / "data" / "raw" / "chest_xray"
-    model_path = project_root / "models" / "resnet18.pth"
+    model_path = (
+        Path(args.model)
+        if args.model
+        else project_root / "models" / "resnet18.pth"
+    )
+    if not model_path.is_absolute():
+        model_path = project_root / model_path
     results_dir = project_root / "results" / "evaluation"
     results_dir.mkdir(parents=True, exist_ok=True)
 
